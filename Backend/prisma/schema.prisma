@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String
+  name      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  projects  Project[]
+}
+
+model Project {
+  id        String    @id @default(cuid())
+  title     String
+  userId    String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id])
+  sources   Source[]
+  messages  Message[]
+  notes     Note[]
+}
+
+model Source {
+  id          String   @id @default(cuid())
+  projectId   String
+  fileName    String?
+  fileType    String?
+  storageUrl  String
+  textContent String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  chunks      SourceChunk[]
+  entities    SourceEntity[]
+  summaries   SourceSummary[]
+}
+
+model SourceChunk {
+  id        String   @id @default(cuid())
+  sourceId  String
+  projectId String
+  index     Int
+  content   String   @db.Text
+  keywords  String[]
+  createdAt DateTime @default(now())
+
+  source    Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+}
+
+model SourceEntity {
+  id           String   @id @default(cuid())
+  sourceId     String
+  projectId    String
+  name         String
+  entityType   String
+  templateText String   @db.Text
+  keywords     String[]
+  createdAt    DateTime @default(now())
+
+  source       Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+}
+
+model SourceSummary {
+  id        String   @id @default(cuid())
+  sourceId  String
+  projectId String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  source    Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  projectId String
+  role      String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  projectId String
+  title     String?
+  content   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
