@@ -1,0 +1,70 @@
+.source-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+  group-hover: visible;
+}
+
+.source-item:hover {
+  background-color: var(--bg-hover);
+}
+
+.source-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  flex: 1;
+}
+
+.source-type-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.source-type-icon.pdf, .source-type-icon.md {
+  background: rgba(108, 99, 255, 0.1);
+  color: var(--accent);
+}
+
+.source-type-icon.link {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+}
+
+.source-type-icon.image {
+  background: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+}
+
+.source-name {
+  font-size: 13px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-delete-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.source-item:hover .source-delete-btn {
+  opacity: 1;
+}
+
+.source-delete-btn:hover {
+  color: var(--danger);
+}

@@ -1,0 +1,271 @@
+.workspace-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+}
+
+.workspace-navbar {
+  height: 60px;
+  background-color: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 280px 1fr 260px;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.ws-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-btn:hover {
+  color: var(--text-primary);
+}
+
+.ws-logo {
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  color: white;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.ws-nav-center {
+  display: flex;
+  justify-content: center;
+}
+
+.title-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 6px;
+  transition: var(--transition);
+}
+
+.title-display:hover {
+  background-color: var(--bg-hover);
+}
+
+.title-display h1 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.edit-icon {
+  color: var(--text-secondary);
+  opacity: 0;
+}
+
+.title-display:hover .edit-icon {
+  opacity: 1;
+}
+
+.title-edit-input {
+  background: var(--bg-hover);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  padding: 4px 12px;
+  text-align: center;
+}
+
+.ws-nav-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.ws-divider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border);
+}
+
+.workspace-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 280px 1fr 260px;
+  overflow: hidden;
+}
+
+.workspace-sidebar {
+  background-color: var(--bg-secondary);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.sources-sidebar {
+  border-right: 1px solid var(--border);
+}
+
+.notes-sidebar {
+  border-left: 1px solid var(--border);
+}
+
+.workspace-center {
+  background-color: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.chat-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-empty {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.chat-empty-logo {
+  width: 64px;
+  height: 64px;
+  background: var(--bg-elevated);
+  color: var(--accent);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 24px;
+  border: 1px solid var(--border);
+}
+
+.chat-empty h2 {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.chat-empty p {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.chat-empty span {
+  font-size: 13px;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.chat-input-area {
+  padding: 24px;
+  background: linear-gradient(to top, var(--bg-primary) 80%, transparent);
+}
+
+.chat-input-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  box-shadow: var(--shadow);
+}
+
+.chat-input-container textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  resize: none;
+  min-height: 24px;
+  max-height: 200px;
+  padding: 4px 0;
+}
+
+.send-btn {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.send-btn:not(:disabled) {
+  background: var(--accent);
+  color: white;
+}
+
+.chat-disclaimer {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 12px;
+}
+
+.notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.notes-header h3 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.add-note-btn {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.add-note-btn:hover {
+  color: var(--accent);
+}
+
+.notes-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  color: var(--border);
+  gap: 16px;
+}
+
+.notes-empty p {
+  font-size: 14px;
+  color: var(--text-secondary);
+}

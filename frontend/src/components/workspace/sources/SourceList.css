@@ -1,0 +1,75 @@
+.source-list-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.source-list-header {
+  padding-bottom: 16px;
+}
+
+.source-list-header h3 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.add-source-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 24px;
+  transition: var(--transition);
+}
+
+.add-source-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background-color: var(--bg-hover);
+}
+
+.sources-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.empty-sources {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  color: var(--border);
+  margin-bottom: 16px;
+}
+
+.empty-sources p {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.empty-sources span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.sources-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
