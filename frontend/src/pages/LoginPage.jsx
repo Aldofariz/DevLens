@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Mail, Lock, User, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
@@ -13,17 +14,24 @@ const LoginPage = () => {
     name: '',
     email: '',
     password: '',
-    confirmPassword: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { login, register } = useAuth();
+  const { login, register, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate('/dashboard');
+    }
+  }, [user, authLoading, navigate]);
 
   const handleToggle = () => {
     setIsLogin(!isLogin);
     setError('');
+    // Clear password when switching modes
+    setFormData(prev => ({ ...prev, password: '' }));
   };
 
   const handleChange = (e) => {
@@ -37,16 +45,24 @@ const LoginPage = () => {
 
     try {
       if (isLogin) {
-        await login(formData.email, formData.password);
+        // Step 2: After login, direct to dashboard
+        await login({ email: formData.email, password: formData.password });
+        toast.success('Login successful!');
+        navigate('/dashboard');
       } else {
-        if (formData.password !== formData.confirmPassword) {
-          throw new Error('Passwords do not match');
-        }
-        await register(formData.name, formData.email, formData.password);
+        // Step 1: After register, switch to login view
+        await register({ 
+          name: formData.name, 
+          email: formData.email, 
+          password: formData.password 
+        });
+        toast.success('Registration successful! Please sign in with your new account.');
+        setIsLogin(true);
+        // Clear password for the login step
+        setFormData(prev => ({ ...prev, password: '' }));
       }
-      navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Authentication failed');
+      setError(err.response?.data?.message || err.message || 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -104,18 +120,6 @@ const LoginPage = () => {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-
-          {!isLogin && (
-            <Input
-              name="confirmPassword"
-              type="password"
-              placeholder="Confirm password"
-              icon={ShieldCheck}
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-          )}
 
           {error && <div className="auth-error">{error}</div>}
 

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, LayoutGrid, List, ChevronDown, Pencil, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { getProjects, createProject, updateProject, deleteProject } from '../services/api/projects';
 import PageContainer from '../components/layout/PageContainer';
 import ProjectGrid from '../components/dashboard/ProjectGrid';
 import Input from '../components/ui/Input';
@@ -9,13 +11,11 @@ import Modal from '../components/ui/Modal';
 import './DashboardPage.css';
 
 const DashboardPage = () => {
-  const [projects, setProjects] = useState([
-    { id: '1', title: 'Technical Spec Analysis', createdAt: 'May 12, 2026', sourceCount: 3 },
-    { id: '2', title: 'React Hooks Deep Dive', createdAt: 'May 10, 2026', sourceCount: 5 },
-    { id: '3', title: 'System Architecture', createdAt: 'May 08, 2026', sourceCount: 2 },
-  ]);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all');
+  const navigate = useNavigate();
   
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -24,35 +24,68 @@ const DashboardPage = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [newProjectTitle, setNewProjectTitle] = useState('');
 
+  // Fetch projects on mount
+  useEffect(() => {
+    getProjects()
+      .then((res) => setProjects(res.data.projects))
+      .catch(() => toast.error("Failed to load projects"))
+      .finally(() => setLoading(false));
+  }, []);
+
   const filteredProjects = projects.filter(p => 
     p.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleCreateProject = () => {
+  const handleCreateProject = async () => {
     if (!newProjectTitle.trim()) return;
-    const newProject = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: newProjectTitle,
-      createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-      sourceCount: 0
-    };
-    setProjects([newProject, ...projects]);
-    setNewProjectTitle('');
-    setIsCreateModalOpen(false);
-    toast.success('Project created successfully');
+    try {
+      const res = await createProject({ title: newProjectTitle });
+      setProjects((prev) => [res.data.project, ...prev]);
+      setNewProjectTitle('');
+      setIsCreateModalOpen(false);
+      toast.success('Project created successfully');
+      navigate(`/workspace/${res.data.project.id}`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to create project');
+    }
   };
 
-  const handleEditProject = () => {
-    if (!newProjectTitle.trim()) return;
-    setProjects(projects.map(p => p.id === selectedProject.id ? { ...p, title: newProjectTitle } : p));
+  const handleEditProject = async () => {
+    if (!newProjectTitle.trim() || !selectedProject) return;
+    const oldTitle = selectedProject.title;
+    
+    // Optimistic update
+    setProjects((prev) =>
+      prev.map((p) => (p.id === selectedProject.id ? { ...p, title: newProjectTitle } : p))
+    );
     setIsEditModalOpen(false);
-    toast.success('Project title updated');
+    
+    try {
+      await updateProject(selectedProject.id, { title: newProjectTitle });
+      toast.success('Project title updated');
+    } catch (err) {
+      setProjects((prev) =>
+        prev.map((p) => (p.id === selectedProject.id ? { ...p, title: oldTitle } : p))
+      );
+      toast.error(err.response?.data?.message || 'Failed to update project');
+    }
   };
 
-  const handleDeleteProject = () => {
-    setProjects(projects.filter(p => p.id === selectedProject.id ? false : true));
+  const handleDeleteProject = async () => {
+    if (!selectedProject) return;
+    const originalProjects = [...projects];
+    
+    // Optimistic update
+    setProjects((prev) => prev.filter((p) => p.id !== selectedProject.id));
     setIsDeleteModalOpen(false);
-    toast.success('Project deleted');
+    
+    try {
+      await deleteProject(selectedProject.id);
+      toast.success('Project deleted');
+    } catch (err) {
+      setProjects(originalProjects);
+      toast.error(err.response?.data?.message || 'Failed to delete project');
+    }
   };
 
   const openEditModal = (project) => {

@@ -21,8 +21,8 @@ const Navbar = () => {
         
         {user && (
           <>
-            <div className="user-avatar" title={user.name}>
-              {user.name.charAt(0)}
+            <div className="user-avatar" title={user.name || user.email}>
+              {(user.name || user.email || '?').charAt(0).toUpperCase()}
             </div>
             <button className="logout-btn" onClick={logout} title="Logout">
               <LogOut size={20} />

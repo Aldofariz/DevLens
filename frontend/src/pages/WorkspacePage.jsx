@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Pencil, Plus, MessageSquare, StickyNote, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -9,92 +9,132 @@ import ChatWindow from '../components/workspace/chat/ChatWindow';
 import NoteCard from '../components/workspace/notes/NoteCard';
 import NoteEditor from '../components/workspace/notes/NoteEditor';
 import Button from '../components/ui/Button';
+import { getProjects, updateProject, createProject } from '../services/api/projects';
+import { getSources, addSource, deleteSource } from '../services/api/sources';
+import { getMessages, sendMessage } from '../services/api/messages';
+import { getNotes, createNote, updateNote, deleteNote } from '../services/api/notes';
 import './WorkspacePage.css';
 
 const WorkspacePage = () => {
-  const { id } = useParams();
+  const { id: projectId } = useParams();
   const navigate = useNavigate();
-  const [projectTitle, setProjectTitle] = useState('Technical Spec Analysis');
+  const [project, setProject] = useState(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [sources, setSources] = useState([
-    { id: '1', name: 'API_Documentation.pdf', type: 'pdf', createdAt: '2026-05-12' },
-    { id: '2', name: 'Schema_Design.md', type: 'md', createdAt: '2026-05-12' },
-  ]);
+  const [titleInput, setTitleInput] = useState('');
+  const [sources, setSources] = useState([]);
   const [isAddSourceModalOpen, setIsAddSourceModalOpen] = useState(false);
-  
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [notes, setNotes] = useState([]);
+  const [editingNote, setEditingNote] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleAddSource = (newSource) => {
-    setSources([...sources, newSource]);
-    toast.success('Source added');
-  };
+  // Initial Data Load
+  useEffect(() => {
+    if (!projectId) return;
+    setLoading(true);
+    
+    Promise.all([
+      getProjects(),
+      getSources(projectId),
+      getMessages(projectId),
+      getNotes(projectId),
+    ])
+      .then(([projRes, srcRes, msgRes, noteRes]) => {
+        const foundProject = projRes.data.projects.find(p => p.id === projectId);
+        if (!foundProject) {
+          toast.error("Project not found");
+          navigate('/dashboard');
+          return;
+        }
+        setProject(foundProject);
+        setTitleInput(foundProject.title);
+        setSources(srcRes.data.sources);
+        setMessages(msgRes.data.messages);
+        setNotes(noteRes.data.notes);
+      })
+      .catch(() => toast.error("Failed to load workspace"))
+      .finally(() => setLoading(false));
+  }, [projectId]);
 
-  const handleDeleteSource = (sourceId) => {
-    setSources(sources.filter(s => s.id !== sourceId));
-    toast.success('Source removed');
-  };
-
-  const handleTitleSubmit = (e) => {
-    if (e.key === 'Enter' || e.type === 'blur') {
-      setIsEditingTitle(false);
-      if (projectTitle.trim()) {
-        toast.success('Project renamed');
-      }
+  // Project Title Handlers
+  const handleTitleBlur = async () => {
+    setIsEditingTitle(false);
+    if (titleInput.trim() === project.title || !titleInput.trim()) return;
+    try {
+      await updateProject(projectId, { title: titleInput.trim() });
+      setProject((prev) => ({ ...prev, title: titleInput.trim() }));
+      toast.success("Project title updated");
+    } catch {
+      setTitleInput(project.title); // revert on failure
+      toast.error("Failed to update title");
     }
   };
 
-  const handleSendMessage = (e) => {
+  const handleTitleKeyDown = (e) => {
+    if (e.key === "Enter") e.target.blur();
+    if (e.key === "Escape") { setTitleInput(project.title); setIsEditingTitle(false); }
+  };
+
+  const handleNewProject = async () => {
+    try {
+      const res = await createProject({ title: "Untitled Project" });
+      navigate(`/workspace/${res.data.project.id}`);
+    } catch {
+      toast.error("Failed to create new project");
+    }
+  };
+
+  // Sources Handlers
+  const handleAddSource = async (formData) => {
+    try {
+      const res = await addSource(projectId, formData);
+      setSources((prev) => [...prev, res.data.source]);
+      toast.success("Source added successfully");
+      setIsAddSourceModalOpen(false);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Upload failed");
+    }
+  };
+
+  const handleDeleteSource = async (sourceId) => {
+    const original = [...sources];
+    setSources((prev) => prev.filter((s) => s.id !== sourceId));
+    try {
+      await deleteSource(projectId, sourceId);
+      toast.success("Source removed");
+    } catch {
+      setSources(original);
+      toast.error("Failed to remove source");
+    }
+  };
+
+  // Chat Handlers
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!inputValue.trim() || isAiLoading) return;
 
-    const userMsg = {
-      id: Date.now().toString(),
-      sender: 'user',
-      content: inputValue,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const userMsg = { 
+      id: Date.now().toString(), 
+      role: "user", 
+      content: inputValue, 
+      createdAt: new Date().toISOString() 
     };
 
-    setMessages([...messages, userMsg]);
-    setInputValue('');
+    setMessages((prev) => [...prev, userMsg]);
+    setInputValue("");
     setIsAiLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiMsg = {
-        id: (Date.now() + 1).toString(),
-        sender: 'ai',
-        content: `I've analyzed your ${sources.length} sources. Based on the documentation, I can help you understand the technical specifications and architecture. What specific part would you like me to explain?`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages(prev => [...prev, aiMsg]);
+    try {
+      const res = await sendMessage(projectId, { content: userMsg.content });
+      const aiMsg = res.data.message; 
+      setMessages((prev) => [...prev, aiMsg]);
+    } catch (err) {
+      toast.error("AI failed to respond. Please try again.");
+    } finally {
       setIsAiLoading(false);
-    }, 1500);
-  };
-
-  const [notes, setNotes] = useState([]);
-  const [editingNote, setEditingNote] = useState(null);
-
-  const handleAddNote = () => {
-    const newNote = {
-      id: Date.now().toString(),
-      title: '',
-      content: '',
-      updatedAt: new Date().toISOString()
-    };
-    setNotes([newNote, ...notes]);
-    setEditingNote(newNote);
-  };
-
-  const handleSaveNote = (updatedNote) => {
-    setNotes(notes.map(n => n.id === updatedNote.id ? updatedNote : n));
-  };
-
-  const handleDeleteNote = (noteId) => {
-    setNotes(notes.filter(n => n.id !== noteId));
-    if (editingNote?.id === noteId) setEditingNote(null);
-    toast.success('Note deleted');
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -103,6 +143,45 @@ const WorkspacePage = () => {
       handleSendMessage(e);
     }
   };
+
+  // Notes Handlers
+  const handleAddNote = async () => {
+    try {
+      const res = await createNote(projectId, { title: "New Note", content: "" });
+      setNotes((prev) => [res.data.note, ...prev]);
+      setEditingNote(res.data.note);
+    } catch {
+      toast.error("Failed to create note");
+    }
+  };
+
+  const handleSaveNote = async (updatedNote) => {
+    // This is called by NoteEditor's debounced effect
+    try {
+      const res = await updateNote(projectId, updatedNote.id, {
+        title: updatedNote.title,
+        content: updatedNote.content,
+      });
+      setNotes((prev) => prev.map((n) => (n.id === updatedNote.id ? res.data.note : n)));
+    } catch {
+      toast.error("Failed to auto-save note");
+    }
+  };
+
+  const handleDeleteNote = async (noteId) => {
+    const original = [...notes];
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
+    if (editingNote?.id === noteId) setEditingNote(null);
+    try {
+      await deleteNote(projectId, noteId);
+      toast.success("Note deleted");
+    } catch {
+      setNotes(original);
+      toast.error("Failed to delete note");
+    }
+  };
+
+  if (loading) return <div className="workspace-loading">Loading Workspace...</div>;
 
   return (
     <div className="workspace-container">
@@ -118,22 +197,22 @@ const WorkspacePage = () => {
           {isEditingTitle ? (
             <input 
               className="title-edit-input"
-              value={projectTitle}
-              onChange={(e) => setProjectTitle(e.target.value)}
-              onKeyDown={handleTitleSubmit}
-              onBlur={handleTitleSubmit}
+              value={titleInput}
+              onChange={(e) => setTitleInput(e.target.value)}
+              onKeyDown={handleTitleKeyDown}
+              onBlur={handleTitleBlur}
               autoFocus
             />
           ) : (
             <div className="title-display" onClick={() => setIsEditingTitle(true)}>
-              <h1>{projectTitle}</h1>
+              <h1>{project?.title}</h1>
               <Pencil size={14} className="edit-icon" />
             </div>
           )}
         </div>
 
         <div className="ws-nav-right">
-          <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')}>
+          <Button variant="outline" size="sm" onClick={handleNewProject}>
             <Plus size={16} /> New Project
           </Button>
           <div className="ws-divider"></div>
@@ -157,8 +236,8 @@ const WorkspacePage = () => {
             <div className="chat-placeholder">
               <div className="chat-empty">
                 <div className="chat-empty-logo">DL</div>
-                <h2>{projectTitle}</h2>
-                <p>{sources.length} sources · May 12, 2026</p>
+                <h2>{project?.title}</h2>
+                <p>{sources.length} sources · {new Date(project?.createdAt).toLocaleDateString()}</p>
                 <span>Add sources and start asking questions.</span>
               </div>
             </div>
