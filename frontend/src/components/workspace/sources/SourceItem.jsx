@@ -4,26 +4,21 @@ import './SourceItem.css';
 
 const SourceItem = ({ source, onDelete }) => {
   const getIcon = (type) => {
-    switch (type) {
-      case 'pdf':
-      case 'md':
-        return <FileText size={16} />;
-      case 'link':
-        return <Link size={16} />;
-      case 'image':
-        return <Image size={16} />;
-      default:
-        return <FileText size={16} />;
-    }
+    if (type === 'url') return <Link size={16} />;
+    if (type?.includes('image')) return <Image size={16} />;
+    if (type?.includes('pdf')) return <FileText size={16} />;
+    return <FileText size={16} />;
   };
+
+  const typeClass = source.fileType === 'url' ? 'url' : 'file';
 
   return (
     <div className="source-item">
       <div className="source-info">
-        <div className={`source-type-icon ${source.type}`}>
-          {getIcon(source.type)}
+        <div className={`source-type-icon ${typeClass}`}>
+          {getIcon(source.fileType)}
         </div>
-        <span className="source-name" title={source.name}>{source.name}</span>
+        <span className="source-name" title={source.fileName}>{source.fileName}</span>
       </div>
       <button 
         className="source-delete-btn" 

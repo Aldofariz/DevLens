@@ -13,7 +13,6 @@ model User {
   name      String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-
   projects  Project[]
 }
 
@@ -23,22 +22,20 @@ model Project {
   userId    String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-
-  user      User      @relation(fields: [userId], references: [id])
-  sources   Source[]
   messages  Message[]
   notes     Note[]
+  user      User      @relation(fields: [userId], references: [id])
+  sources   Source[]
 }
 
 model Source {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   projectId   String
   fileName    String?
   fileType    String?
   storageUrl  String
-  textContent String?  @db.Text
-  createdAt   DateTime @default(now())
-
+  textContent String?
+  createdAt   DateTime        @default(now())
   project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   chunks      SourceChunk[]
   entities    SourceEntity[]
@@ -50,10 +47,9 @@ model SourceChunk {
   sourceId  String
   projectId String
   index     Int
-  content   String   @db.Text
+  content   String
   keywords  String[]
   createdAt DateTime @default(now())
-
   source    Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
 }
 
@@ -63,10 +59,9 @@ model SourceEntity {
   projectId    String
   name         String
   entityType   String
-  templateText String   @db.Text
+  templateText String
   keywords     String[]
   createdAt    DateTime @default(now())
-
   source       Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
 }
 
@@ -74,9 +69,8 @@ model SourceSummary {
   id        String   @id @default(cuid())
   sourceId  String
   projectId String
-  content   String   @db.Text
+  content   String
   createdAt DateTime @default(now())
-
   source    Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
 }
 
@@ -84,9 +78,8 @@ model Message {
   id        String   @id @default(cuid())
   projectId String
   role      String
-  content   String   @db.Text
+  content   String
   createdAt DateTime @default(now())
-
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
@@ -94,9 +87,8 @@ model Note {
   id        String   @id @default(cuid())
   projectId String
   title     String?
-  content   String?  @db.Text
+  content   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }

@@ -17,24 +17,21 @@ const AddSourceModal = ({ isOpen, onClose, onAdd }) => {
   };
 
   const handleAdd = () => {
+    const formData = new FormData();
+    
     if (activeTab === 'upload' && selectedFile) {
-      onAdd({
-        id: Math.random().toString(36).substr(2, 9),
-        name: selectedFile.name,
-        type: selectedFile.name.split('.').pop() === 'pdf' ? 'pdf' : 'md',
-        createdAt: new Date().toISOString(),
-      });
-      setSelectedFile(null);
+      formData.append("file", selectedFile);
+      formData.append("type", "file");
     } else if (activeTab === 'url' && url) {
-      onAdd({
-        id: Math.random().toString(36).substr(2, 9),
-        name: url.replace(/(^\w+:|^)\/\//, '').split('/')[0],
-        type: 'link',
-        createdAt: new Date().toISOString(),
-      });
-      setUrl('');
+      formData.append("url", url);
+      formData.append("type", "url");
+    } else {
+      return;
     }
-    onClose();
+
+    onAdd(formData);
+    setSelectedFile(null);
+    setUrl('');
   };
 
   return (

@@ -1,22 +1,18 @@
 require("dotenv").config();
 
 const { PrismaClient } = require("@prisma/client");
+const { Pool } = require("pg");
 const { PrismaPg } = require("@prisma/adapter-pg");
 
-const connectionString =
-  process.env.DATABASE_URL
+const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+const adapter = new PrismaPg(pool);
 
-const adapter = new PrismaPg({ connectionString });
-
-const prisma =
-  global.__devlensPrisma ||
-  new PrismaClient({
-    adapter,
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-  });
-
-if (process.env.NODE_ENV !== "production") {
-  global.__devlensPrisma = prisma;
-}
+const prisma = new PrismaClient({
+  adapter,
+  log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+});
 
 module.exports = prisma;

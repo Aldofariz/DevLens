@@ -1,73 +1,60 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import axiosInstance from '../utils/axiosInstance';
+import { createContext, useContext, useState, useEffect } from "react";
+import { login as loginApi, logout as logoutApi, register as registerApi } from "../services/api/auth";
+import api from "../utils/axiosInstance";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+export function AuthProvider({ children }) {
+  const [user, setUser]       = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // On mount: verify session by calling /projects (since /auth/me is missing from spec)
   useEffect(() => {
-    // Check if user is logged in (e.g., via a "me" endpoint)
-    const checkAuth = async () => {
-      try {
-        // Assuming there's a /auth/me endpoint that returns user info if session/cookie is valid
-        // const response = await axiosInstance.get('/auth/me');
-        // setUser(response.data.user);
-        
-        // For now, check localStorage for a mock user to simulate persistence if needed
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
-        }
-      } catch (error) {
-        console.error('Auth check failed', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
 
-    checkAuth();
+    api.get("api/projects")
+      .then(() => {
+        // Session is valid, if we have a saved user, we keep it.
+        // If not, we might still be logged in but don't have user info (rare).
+      })
+      .catch(() => {
+        setUser(null);
+        localStorage.removeItem("user");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  const login = async (email, password) => {
-    // const response = await axiosInstance.post('/auth/login', { email, password });
-    // setUser(response.data.user);
-    // localStorage.setItem('user', JSON.stringify(response.data.user));
-    
-    // Mock login
-    const mockUser = { id: '1', name: 'Dev User', email };
-    setUser(mockUser);
-    localStorage.setItem('user', JSON.stringify(mockUser));
+  const login = async (credentials) => {
+    const res = await loginApi(credentials);
+    const userData = res.data.user;
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+    return res;
   };
 
-  const register = async (name, email, password) => {
-    // const response = await axiosInstance.post('/auth/register', { name, email, password });
-    // setUser(response.data.user);
-    
-    // Mock register
-    const mockUser = { id: '1', name, email };
-    setUser(mockUser);
-    localStorage.setItem('user', JSON.stringify(mockUser));
+  const register = async (data) => {
+    const res = await registerApi(data);
+    return res;
   };
 
   const logout = async () => {
-    // await axiosInstance.post('/auth/logout');
-    setUser(null);
-    localStorage.removeItem('user');
+    try {
+      await logoutApi();
+    } finally {
+      setUser(null);
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);

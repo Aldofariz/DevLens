@@ -1,0 +1,16 @@
+name: frontend-backend-integration
+description: Fully integrate the existing React.js frontend with the Express.js backend of DevLens.
+status: in-progress
+artifacts:
+  - id: proposal
+    status: done
+    outputPath: proposal.md
+  - id: design
+    status: done
+    outputPath: design.md
+  - id: tasks
+    status: done
+    outputPath: tasks.md
+apply:
+  requires:
+    - tasks
